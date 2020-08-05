@@ -1,0 +1,62 @@
+{
+	"name": "mapbox-gl-threelayer",
+	"version": "0.0.2",
+	"description": "Plugin to help you use Three.js on Mapbox-GL",
+	"main": "dist/mapbox-gl-threelayer.min.js",
+	"typings": "lib/index.d.ts",
+	"files": [
+		"dist",
+		"lib"
+	],
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lib": "npm run tsc && webpack -p --config webpack.config.js",
+		"build": "node scripts/clean & npm run lib",
+		"deploy": "npm run lib && npm publish",
+		"lint": "npm run tsc",
+		"tsc": "tsc"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/salgum1114/mapbox-gl-threelayer.git"
+	},
+	"keywords": [
+		"mapbox",
+		"mapbox-gl",
+		"threejs",
+		"threelayer",
+		"customlayer"
+	],
+	"author": "salgum1114",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/salgum1114/mapbox-gl-threelayer/issues"
+	},
+	"homepage": "https://github.com/salgum1114/mapbox-gl-threelayer#readme",
+	"peerDependencies": {
+		"mapbox-gl": "^1.11.1",
+		"three": "^0.118.3"
+	},
+	"dependencies": {
+		"@babel/runtime-corejs3": "^7.10.5",
+		"mapbox-gl": "^1.11.1",
+		"three": "^0.118.3"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.10.5",
+		"@babel/plugin-proposal-async-generator-functions": "^7.10.5",
+		"@babel/plugin-proposal-class-properties": "^7.10.4",
+		"@babel/plugin-proposal-object-rest-spread": "^7.10.4",
+		"@babel/plugin-transform-runtime": "^7.10.5",
+		"@babel/preset-env": "^7.10.4",
+		"@babel/preset-typescript": "^7.10.4",
+		"@types/mapbox-gl": "^1.11.1",
+		"babel-loader": "^8.1.0",
+		"del": "^5.1.0",
+		"terser-webpack-plugin": "^3.0.7",
+		"tslint": "^6.1.2",
+		"typescript": "^3.9.7",
+		"webpack": "^4.43.0",
+		"webpack-cli": "^3.3.12"
+	}
+}

@@ -1,0 +1,11 @@
+.vscode/
+package-lock.json
+node_modules/
+dist/
+lib/
+build/
+docs/
+out/
+.cache/
+.next/
+next-env.d.ts
