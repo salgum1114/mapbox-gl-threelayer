@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 const examples: React.FC = () => {
 	const router = useRouter();
 	useEffect(() => {
-		router.push('/examples/mapbox-gl');
+		router.push(`${process.env.prefix}/examples/mapbox-gl`);
 	}, []);
 	return null;
 };
