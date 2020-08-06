@@ -1,6 +1,6 @@
 {
 	"name": "mapbox-gl-threelayer",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Plugin to help you use Three.js on Mapbox-GL",
 	"main": "dist/mapbox-gl-threelayer.min.js",
 	"typings": "lib/index.d.ts",
@@ -39,6 +39,7 @@
 	},
 	"dependencies": {
 		"@babel/runtime-corejs3": "^7.10.5",
+		"events": "^3.2.0",
 		"mapbox-gl": "^1.11.1",
 		"three": "^0.118.3"
 	},

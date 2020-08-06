@@ -34,6 +34,7 @@ import Constant from './Constant';
 import Utils from './Utils';
 import Material from './Material';
 import { EventHandler, ObjectHandler, AnimationHandler } from './handlers';
+import EventDispatcher from './EventDispatcher';
 
 export type ThreeboxOption = {
 	/**
@@ -96,6 +97,17 @@ export type ThreeboxOption = {
 	useDraggingObjects?: boolean;
 };
 
+export type ThreeboxEventType =
+	| 'select'
+	| 'add' // TODO...
+	| 'remove' // TODO...
+	| 'moved' // TODO...
+	| 'moving' // TODO...
+	| 'scaled' // TODO...
+	| 'scaling' // TODO...
+	| 'rotated' // TODO...
+	| 'rotating'; // TODO...
+
 export type LoadModelType = 'gltf' | 'obj' | 'fbx' | 'dae';
 
 export interface LoadModelOption {
@@ -149,7 +161,7 @@ export interface LoadModelOption {
 	normalize?: boolean;
 }
 
-export type ThreeboxEventType =
+export type ThreeboxObjectEventType =
 	| 'changed.wireframe'
 	| 'changed.selected'
 	| 'changed.isPlyaing'
@@ -224,28 +236,28 @@ export interface ThreeboxObject extends Omit<Object3D, 'add' | 'remove'> {
 	dispose?: () => void;
 	/**
 	 * Adds a listener to an event type.
-	 * @param {ThreeboxEventType} type The type of event to listen to.
+	 * @param {ThreeboxObjectEventType} type The type of event to listen to.
 	 * @param {(event: Event) => void} listener The function that gets called when the event is fired.
 	 */
-	addEventListener(type: ThreeboxEventType, listener: (event: Event) => void): void;
+	addEventListener(type: ThreeboxObjectEventType, listener: (event: Event) => void): void;
 	/**
 	 * Checks if listener is added to an event type.
-	 * @param {ThreeboxEventType} type The type of event to listen to.
+	 * @param {ThreeboxObjectEventType} type The type of event to listen to.
 	 * @param {(event: Event) => void} listener The function that gets called when the event is fired.
 	 */
-	hasEventListener(type: ThreeboxEventType, listener: (event: Event) => void): boolean;
+	hasEventListener(type: ThreeboxObjectEventType, listener: (event: Event) => void): boolean;
 	/**
 	 * Removes a listener from an event type.
 	 * @author salgum1114
-	 * @param {ThreeboxEventType} type The type of the listener that gets removed.
+	 * @param {ThreeboxObjectEventType} type The type of the listener that gets removed.
 	 * @param {(event: Event) => void} listener The listener function that gets removed.
 	 */
-	removeEventListener(type: ThreeboxEventType, listener: (event: Event) => void): void;
+	removeEventListener(type: ThreeboxObjectEventType, listener: (event: Event) => void): void;
 	/**
 	 * Fire an event type.
 	 * @param type The type of event that gets fired.
 	 */
-	dispatchEvent(event: { type: ThreeboxEventType; [attachment: string]: any }): void;
+	dispatchEvent(event: { type: ThreeboxObjectEventType; [attachment: string]: any }): void;
 }
 
 export const ThreeboxDefaultOption: ThreeboxOption = {
@@ -272,7 +284,7 @@ export const LoadModelDefaultOption: LoadModelOption = {
 	normalize: false,
 };
 
-class Threebox {
+class Threebox extends EventDispatcher {
 	version = VERSION;
 	map: mapboxgl.Map;
 	gl: WebGLRenderingContext;
@@ -310,6 +322,7 @@ class Threebox {
 	 * @param {ThreeboxOption} [option]
 	 */
 	constructor(map: mapboxgl.Map, gl: WebGLRenderingContext, option?: ThreeboxOption) {
+		super();
 		this.map = map;
 		this.gl = gl;
 
@@ -363,14 +376,22 @@ class Threebox {
 		this.raycaster.layers.set(0);
 
 		// set up event option
-		this.setEventOption(this.option);
+		this.setOption(this.option);
 
 		// create default lights
 		this.defaultLights();
 	}
 
-	setEventOption(option: ThreeboxOption) {
-		this.useDefaultLights = this.option.useDefaultLights;
+	/**
+	 * Set up event option
+	 *
+	 * @author salgum1114
+	 * @param {ThreeboxOption} option
+	 */
+	public setOption(option: ThreeboxOption) {
+		// TODO...
+		console.debug(this.utils.validate(option || {}, this));
+		this.useDefaultLights = option.useDefaultLights;
 		this.useTooltip = option.useTooltip;
 		this.useHover = option.useHover;
 		this.useSelectingFeatures = option.useSelectingFeatures;
@@ -383,7 +404,7 @@ class Threebox {
 	 *
 	 * @author salgum1114
 	 */
-	defaultLights() {
+	public defaultLights() {
 		if (this.useDefaultLights) {
 			const ambientLight = new AmbientLight(new Color('hsl(0, 0%, 100%)'), 0.75);
 			this.scene.add(ambientLight);
@@ -404,7 +425,7 @@ class Threebox {
 	 * @author salgum1114
 	 * @returns
 	 */
-	memory() {
+	public memory() {
 		return this.renderer.info.memory;
 	}
 
@@ -414,7 +435,7 @@ class Threebox {
 	 * @author salgum1114
 	 * @returns
 	 */
-	programs() {
+	public programs() {
 		return this.renderer.info.programs.length;
 	}
 
@@ -425,7 +446,7 @@ class Threebox {
 	 * @param {[number, number, number]} coords
 	 * @returns
 	 */
-	projectToWorld(coords: [number, number, number]) {
+	public projectToWorld(coords: [number, number, number]) {
 		return this.utils.projectToWorld(coords);
 	}
 
@@ -436,7 +457,7 @@ class Threebox {
 	 * @param {{ x: number; y: number; z: number }} v3
 	 * @returns
 	 */
-	unprojectFromWorld(v3: { x: number; y: number; z: number }) {
+	public unprojectFromWorld(v3: { x: number; y: number; z: number }) {
 		return this.utils.unprojectFromWorld(v3);
 	}
 
@@ -447,7 +468,7 @@ class Threebox {
 	 * @param {number} lat
 	 * @returns
 	 */
-	projectedUnitsPerMeter(lat: number) {
+	public projectedUnitsPerMeter(lat: number) {
 		return this.utils.projectedUnitsPerMeter(lat);
 	}
 
@@ -460,7 +481,7 @@ class Threebox {
 	 * @param {number} level
 	 * @returns
 	 */
-	getFeatureCenter(feature: GeoJSON.Feature<any>, obj?: ThreeboxObject, level?: number) {
+	public getFeatureCenter(feature: GeoJSON.Feature<any>, obj?: ThreeboxObject, level?: number) {
 		return this.utils.getFeatureCenter(feature, obj, level);
 	}
 
@@ -473,7 +494,7 @@ class Threebox {
 	 * @param {number} [level]
 	 * @returns
 	 */
-	getObjectHeightOnFloor(feature: GeoJSON.Feature<any>, obj?: ThreeboxObject, level?: number) {
+	public getObjectHeightOnFloor(feature: GeoJSON.Feature<any>, obj?: ThreeboxObject, level?: number) {
 		return this.utils.getObjectHeightOnFloor(feature, obj, level);
 	}
 
@@ -484,7 +505,7 @@ class Threebox {
 	 * @param {mapboxgl.Point} point
 	 * @returns
 	 */
-	queryRenderedFeatures(point: mapboxgl.Point) {
+	public queryRenderedFeatures(point: mapboxgl.Point) {
 		const map = this.map as any;
 		const mouse = new Vector2();
 
@@ -507,7 +528,7 @@ class Threebox {
 	 * @param {Intersection} mesh
 	 * @returns
 	 */
-	findParent3DObject(mesh: Intersection) {
+	public findParent3DObject(mesh: Intersection) {
 		// find the Parent Object3D of the mesh captured by Raytracer
 		let result: ThreeboxObject;
 		mesh.object.traverseAncestors((m: Object3D) => {
@@ -529,7 +550,7 @@ class Threebox {
 	 * @param {*} value
 	 * @returns
 	 */
-	setLayoutProperty(layerId: string, name: string, value: any) {
+	public setLayoutProperty(layerId: string, name: string, value: any) {
 		// first set layout property at the map
 		this.map.setLayoutProperty(layerId, name, value);
 		if (value !== null && value !== undefined) {
@@ -552,7 +573,7 @@ class Threebox {
 	 * @param {number} minZoomLayer
 	 * @param {number} maxZoomLayer
 	 */
-	setLayerZoomRange(layer3d: string, minZoomLayer: number, maxZoomLayer: number) {
+	public setLayerZoomRange(layer3d: string, minZoomLayer: number, maxZoomLayer: number) {
 		if (this.map.getLayer(layer3d)) {
 			this.map.setLayerZoomRange(layer3d, minZoomLayer, maxZoomLayer);
 			this.setLabelZoomRange(minZoomLayer, maxZoomLayer);
@@ -567,7 +588,7 @@ class Threebox {
 	 * @param {number} level
 	 * @returns
 	 */
-	setLayerHeigthProperty(layerId: string, level: number) {
+	public setLayerHeigthProperty(layerId: string, level: number) {
 		const map = this.map as any;
 		const layer = map.getLayer(layerId);
 		if (!layer) return;
@@ -599,7 +620,7 @@ class Threebox {
 	 * @param {string} layerId
 	 * @param {boolean} visible
 	 */
-	toggleLayer(layerId: string, visible: boolean) {
+	public toggleLayer(layerId: string, visible: boolean) {
 		if (this.map.getLayer(layerId)) {
 			this.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
 		}
@@ -613,7 +634,7 @@ class Threebox {
 	 * @param {number} minZoom
 	 * @param {number} maxZoom
 	 */
-	setLabelZoomRange(minZoom: number, maxZoom: number) {
+	public setLabelZoomRange(minZoom: number, maxZoom: number) {
 		console.warn('[DEPRECATED] Not used', minZoom, maxZoom);
 		// this.labelRenderer.setZoomRange(minZoom, maxZoom);
 	}
@@ -623,7 +644,7 @@ class Threebox {
 	 *
 	 * @author salgum1114
 	 */
-	update() {
+	public update() {
 		if (this.map.repaint) {
 			this.map.repaint = false;
 		}
@@ -646,7 +667,7 @@ class Threebox {
 		}
 	}
 
-	add(obj: any) {
+	public add(obj: any) {
 		// remove the tooltip if not enabled
 		if (!this.useTooltip && obj.tooltip) {
 			obj.tooltip.visibility = false;
@@ -654,7 +675,7 @@ class Threebox {
 		this.world.add(obj);
 	}
 
-	remove(obj: any) {
+	public remove(obj: any) {
 		// remove also the label if exists dispatching the event removed to fire CSS2DRenderer "removed" listener
 		if (obj.label) {
 			obj.label.remove();
@@ -671,7 +692,7 @@ class Threebox {
 	 * @author salgum1114
 	 * @returns
 	 */
-	dispose() {
+	public dispose() {
 		console.log(this.memory());
 		return new Promise<boolean>(resolve => {
 			this.world.traverse((obj: any) => {
@@ -752,11 +773,12 @@ class Threebox {
 			// this.labelRenderer.dispose();
 			console.log(this.memory());
 			this.renderer.dispose();
+			this.events.dispose();
 			resolve(true);
 		});
 	}
 
-	async loadModel(option: LoadModelOption) {
+	public async loadModel(option: LoadModelOption) {
 		if (!option.type) {
 			console.warn('[WARNING] Required type option', option);
 			return Promise.reject();

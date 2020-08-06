@@ -44,22 +44,22 @@ class EventHandler {
 		this.attachEvent();
 	}
 
-	attachEvent = () => {
-		this.map.on('mousedown', this.handleMouseDown);
-		this.map.on('mouseout', this.handleMouseOut);
-		this.map.on('mousemove', this.handleMouseMove);
-		this.map.on('click', this.handleClick);
-	};
-
-	detachEvent = () => {
+	public dispose = () => {
 		this.map.off('mousedown', this.handleMouseDown);
 		this.map.off('mouseout', this.handleMouseOut);
 		this.map.off('mousemove', this.handleMouseMove);
 		this.map.off('click', this.handleClick);
 	};
 
+	private attachEvent = () => {
+		this.map.on('mousedown', this.handleMouseDown);
+		this.map.on('mouseout', this.handleMouseOut);
+		this.map.on('mousemove', this.handleMouseMove);
+		this.map.on('click', this.handleClick);
+	};
+
 	// Return the xy coordinates of the mouse position
-	mousePos(e: mapboxgl.MapMouseEvent & mapboxgl.EventData) {
+	private mousePos(e: mapboxgl.MapMouseEvent & mapboxgl.EventData) {
 		const rect = this.canvas.getBoundingClientRect();
 		return new mapboxgl.Point(
 			e.originalEvent.clientX - rect.left - this.canvas.clientLeft,
@@ -67,7 +67,7 @@ class EventHandler {
 		);
 	}
 
-	unselectFeature(point: mapboxgl.Point, feature: mapboxgl.MapboxGeoJSONFeature) {
+	private unselectFeature(point: mapboxgl.Point, feature: mapboxgl.MapboxGeoJSONFeature) {
 		if (typeof feature.id === 'undefined') {
 			return;
 		}
@@ -87,7 +87,7 @@ class EventHandler {
 		this.selectedFeature = null;
 	}
 
-	selectFeature(point: mapboxgl.Point, feature: mapboxgl.MapboxGeoJSONFeature) {
+	private selectFeature(point: mapboxgl.Point, feature: mapboxgl.MapboxGeoJSONFeature) {
 		this.selectedFeature = feature;
 		this.map.setFeatureState(
 			{
@@ -106,7 +106,7 @@ class EventHandler {
 		this.map.fire('SelectedFeatureChange', { detail: this.selectedFeature });
 	}
 
-	unoverFeature(feature: mapboxgl.MapboxGeoJSONFeature) {
+	private unoverFeature(feature: mapboxgl.MapboxGeoJSONFeature) {
 		if (this.overedFeature && typeof this.overedFeature !== 'undefined' && this.overedFeature.id !== feature.id) {
 			// if (overedFeature && typeof overedFeature !== 'undefined' && overedFeature.id != f) {
 			this.map.setFeatureState(
@@ -122,14 +122,13 @@ class EventHandler {
 		}
 	}
 
-	unselectObject(object: ThreeboxObject) {
+	private unselectObject(object: ThreeboxObject) {
 		// deselect, reset and return
 		object.selected = false;
-		console.log(object.selected);
 		this.selectedObject = null;
 	}
 
-	addTooltip(_feature: mapboxgl.MapboxGeoJSONFeature) {
+	private addTooltip(_feature: mapboxgl.MapboxGeoJSONFeature) {
 		// if (!this.threebox.useTooltip) {
 		// 	return;
 		// }
@@ -145,13 +144,13 @@ class EventHandler {
 		// tooltipObj.tooltip.tooltip.visible = true;
 	}
 
-	removeTooltip(_feature: mapboxgl.MapboxGeoJSONFeature) {
+	private removeTooltip = (_feature: mapboxgl.MapboxGeoJSONFeature) => {
 		// if (feature.tooltip) {
 		// 	feature.tooltip.visibility = false;
 		// 	this.threebox.remove(feature.tooltip);
 		// 	feature.tooltip = null;
 		// }
-	}
+	};
 
 	private handleClick = (e: mapboxgl.MapMouseEvent & mapboxgl.EventData) => {
 		let intersectionExists;
@@ -173,14 +172,26 @@ class EventHandler {
 				if (!this.selectedObject) {
 					this.selectedObject = nearestObject;
 					this.selectedObject.selected = true;
+					this.threebox.emit('select', {
+						type: 'object',
+						target: this.selectedObject,
+					});
 				} else if (this.selectedObject.uuid !== nearestObject.uuid) {
 					// it's a different object, restore the previous and select the new one
 					this.selectedObject.selected = false;
 					nearestObject.selected = true;
 					this.selectedObject = nearestObject;
+					this.threebox.emit('select', {
+						type: 'object',
+						target: this.selectedObject,
+					});
 				} else if (this.selectedObject.uuid === nearestObject.uuid) {
 					// deselect, reset and return
 					this.unselectObject(this.selectedObject);
+					this.threebox.emit('select', {
+						type: 'object',
+						target: null,
+					});
 					return;
 				}
 
@@ -208,13 +219,25 @@ class EventHandler {
 					// if not selected yet, select it
 					if (!this.selectedFeature) {
 						this.selectFeature(e.point, features[0]);
+						this.threebox.emit('select', {
+							type: 'feature',
+							target: this.selectedFeature,
+						});
 					} else if (this.selectedFeature.id !== features[0].id) {
 						// it's a different feature, restore the previous and select the new one
 						this.unselectFeature(e.point, this.selectedFeature);
 						this.selectFeature(e.point, features[0]);
+						this.threebox.emit('select', {
+							type: 'feature',
+							target: this.selectedFeature,
+						});
 					} else if (this.selectedFeature.id === features[0].id) {
 						// deselect, reset and return
 						this.unselectFeature(e.point, this.selectedFeature);
+						this.threebox.emit('select', {
+							type: 'feature',
+							target: null,
+						});
 						return;
 					}
 				}
@@ -329,10 +352,6 @@ class EventHandler {
 							layers: [this.overedFeature.layer.id],
 							filter: ['==', ['id'], this.overedFeature.id],
 						})[0];
-						// overedFeature = _self.map.queryRenderedFeatures({
-						// 	layers: [overedFeature.layer.id],
-						// 	filter: ['==', ['id'], overedFeature.id],
-						// })[0];
 						this.addTooltip(this.overedFeature);
 					}
 				}
